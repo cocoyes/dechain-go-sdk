@@ -10,6 +10,7 @@ import (
 	"dechain-go-sdk/face"
 	"dechain-go-sdk/utils"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -39,9 +40,9 @@ func ossdk_createClient(ip *C.char) *C.char {
 //export ossdk_callCommand
 func ossdk_callCommand(command *C.char,params *C.char) *C.char {
 	methodName:=C.GoString(command)
-	json:=C.GoString(params)
+	str:=C.GoString(params)
 	tempMap:=map[string]string{}
-	err := json.Unmarshal([]byte(json), &tempMap)
+	err := json.Unmarshal([]byte(str), &tempMap)
 	if err != nil {
 		obj:=face.MessageResult{
 			Code:    2 ,
