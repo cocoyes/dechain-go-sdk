@@ -43,10 +43,7 @@ func CreateAccount(name, passWd string) (mnWallet MnWallet, err error) {
 		return
 	}
 
-	wallet,err:=hdwallet.NewFromMnemonic(mnemo)
-	if err!=nil {
-		panic("Invalid mnemonic")
-	}
+	wallet,_:=hdwallet.NewFromMnemonic(mnemo)
 	path := hdwallet.MustParseDerivationPath("m/44'/60'/0'/0/0")
 	account, err := wallet.Derive(path, false)
 	privateKey, err := wallet.PrivateKeyHex(account)
@@ -81,7 +78,10 @@ func ImportWallet(mn string) (mnWallet MnWallet, err error) {
 		passWd = defaultPassWd
 		log.Printf("Default password: \"%s\"\n", passWd)
 	}
-	wallet,_:=hdwallet.NewFromMnemonic(mn)
+	wallet,err:=hdwallet.NewFromMnemonic(mn)
+	if err!=nil {
+		return MnWallet{},errors.New("Invalid mnemonic")
+	}
 	path := hdwallet.MustParseDerivationPath("m/44'/60'/0'/0/0")
 	account, err := wallet.Derive(path, false)
 	privateKey, err := wallet.PrivateKeyHex(account)
