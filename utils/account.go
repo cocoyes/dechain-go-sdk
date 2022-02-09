@@ -43,7 +43,10 @@ func CreateAccount(name, passWd string) (mnWallet MnWallet, err error) {
 		return
 	}
 
-	wallet,_:=hdwallet.NewFromMnemonic(mnemo)
+	wallet,err:=hdwallet.NewFromMnemonic(mnemo)
+	if err!=nil {
+		panic("Invalid mnemonic")
+	}
 	path := hdwallet.MustParseDerivationPath("m/44'/60'/0'/0/0")
 	account, err := wallet.Derive(path, false)
 	privateKey, err := wallet.PrivateKeyHex(account)
