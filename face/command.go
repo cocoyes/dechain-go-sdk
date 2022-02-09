@@ -9,6 +9,7 @@ import (
 	"dechain-go-sdk/client"
 	"dechain-go-sdk/utils"
 	"encoding/hex"
+	"errors"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -92,14 +93,23 @@ func Call(methodName string,params ...interface{}) ( result MessageResult)  {
 	}
 	//利用函数反射对象的call方法调用函数.
 	back:=f.Call(in)
-	ret := back[0].Interface()
+	ret ,err:= back[0].Interface(),back[1].Interface()
+	if err!=nil{
+		er:=err.(error)
+		if er!=nil{
+			return errorMsg(2,er.Error())
+		}
+	}
 	return successMsg(ret)
 }
 
 
 //生成助记词、私钥、地址
-func genKey(params map[string]string) interface{} {
-	mnWallet,_:= utils.CreateAccount("","")
+func genKey(params map[string]string) (interface{},error) {
+	mnWallet,err:= utils.CreateAccount("","")
+	if err!=nil{
+		return nil,err
+	}
 	st := struct {
 		Prikey     string `json:"prikey"`
 		Mnemo 	   string  `json:"mnemo"`
@@ -111,13 +121,13 @@ func genKey(params map[string]string) interface{} {
 		Address:    mnWallet.Address,
 		HexAddr:    mnWallet.HexAddress,
 	}
-	return st
+	return st,nil
 }
 
 //导入助记，返回私钥、地址
-func importMnemo(params map[string]string) interface{} {
+func importMnemo(params map[string]string) (interface{},error) {
 	mn:=params["mn"]
-	mnWallet,_:=utils.ImportWallet(mn)
+	mnWallet,err:=utils.ImportWallet(mn)
 	st := struct {
 		Prikey     string `json:"prikey"`
 		Mnemo 	   string  `json:"mnemo"`
@@ -129,39 +139,39 @@ func importMnemo(params map[string]string) interface{} {
 		Address:    mnWallet.Address,
 		HexAddr:    mnWallet.HexAddress,
 	}
-	return st
+	return st,err
 }
 
 //普通地址转0x地址
-func addrToHex(params map[string]string) interface{} {
+func addrToHex(params map[string]string) (interface{},error) {
 	addr:=params["addr"]
-	commonAddress,_:=utils.ToHexAddress(addr)
-	return commonAddress
+	commonAddress,err:=utils.ToHexAddress(addr)
+	return commonAddress,err
 }
 //0x地址转普通地址
-func hexToAddr(params map[string]string) interface{} {
+func hexToAddr(params map[string]string) (interface{},error) {
 	addr:=params["addr"]
-	commonAddress,_:=utils.ToCosmosAddress(addr)
-	return commonAddress
+	commonAddress,err:=utils.ToCosmosAddress(addr)
+	return commonAddress,err
 }
 
 
 //主币余额（活力值余额）
-func balanceMain(params map[string]string) interface{} {
+func balanceMain(params map[string]string) (interface{},error) {
 	addr:=params["addr"]
 	if !strings.HasPrefix(addr,"0x") {
 		addr=utils.AddrToHex(addr)
 	}
 	ba,err:=client.EthClient.BalanceAt(context.Background(),common.HexToAddress(addr),nil)
 	if err!=nil {
-		return "0"
+		return "0",nil
 	}else {
-		return ba.String()
+		return ba.String(),nil
 	}
 }
 
 //代币余额（通证余额）
-func balanceContract(params map[string]string) interface{} {
+func balanceContract(params map[string]string) (interface{},error) {
 	caddr:=params["caddr"]
 	addr:=params["addr"]
 	if !strings.HasPrefix(addr,"0x") {
@@ -172,15 +182,15 @@ func balanceContract(params map[string]string) interface{} {
 	}
 	ba,err:=client.EthClient.GetContractBalance(caddr,addr)
 	if err!=nil {
-		return "0"
+		return "0",nil
 	}else {
-		return ba.String()
+		return ba.String(),nil
 	}
 }
 
 
 //主币转账（活力值转账）
-func transferMain(params map[string]string) interface{} {
+func transferMain(params map[string]string) (interface{},error) {
 	taddr:=params["taddr"]
 	pri:=params["pri"]
 	amo:=params["amo"]
@@ -201,30 +211,30 @@ func transferMain(params map[string]string) interface{} {
 	signer := types.LatestSignerForChainID(chainID)
 	signature, err := crypto.Sign(signer.Hash(tx).Bytes(), cryKey)
 	if err != nil {
-		panic("key sign error")
+		return nil,errors.New("key sign error")
 	}
 	signedTx, err := tx.WithSignature(signer, signature)
 	if err != nil {
-		panic("tx sign error")
+		return nil,errors.New("tx sign error")
 	}
 	// Send transaction
 	err = client.EthClient.SendTransaction(context.Background(), signedTx)
 	if err != nil {
-		panic("Send transaction error")
+		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
 		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
 		if err!=nil {
-			panic("trans fail")
+			return nil,errors.New("trans fail")
 		}else {
-			return hash.Hex()
+			return hash.Hex(),nil
 		}
 	}
 }
 
 
 //代币转账（通证转账）contractAddr通证地址、amount数量对应单位长度
-func transferContract(params map[string]string) interface{} {
+func transferContract(params map[string]string) (interface{},error) {
 	taddr:=params["taddr"]
 	pri:=params["pri"]
 	amo:=params["amo"]
@@ -253,29 +263,29 @@ func transferContract(params map[string]string) interface{} {
 	signer := types.LatestSignerForChainID(chainID)
 	signature, err := crypto.Sign(signer.Hash(tx).Bytes(), cryKey)
 	if err != nil {
-		panic("key sign error")
+		return nil,errors.New("key sign error")
 	}
 	signedTx, err := tx.WithSignature(signer, signature)
 	if err != nil {
-		panic("tx sign error")
+		return nil,errors.New("tx sign error")
 	}
 	// Send transaction
 	err = client.EthClient.SendTransaction(context.Background(), signedTx)
 	if err != nil {
-		panic("Send transaction error")
+		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
 		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
 		if err!=nil {
-			panic("trans fail")
+			return nil,errors.New("trans fail")
 		}else {
-			return  hash.Hex()
+			return  hash.Hex(),nil
 		}
 	}
 }
 
 //计算手续费
-func calFee(params map[string]string) interface{} {
+func calFee(params map[string]string) (interface{},error) {
 	res := struct {
 		Common     string `json:"common"`
 		Contract 	   string  `json:"contract"`
@@ -292,22 +302,22 @@ func calFee(params map[string]string) interface{} {
 	// 20 * 21000 /x = 0.00042
 	res.Common=cheng1.String()
 	res.Contract=cheng2.String()
-	return res
+	return res,nil
 }
 
 //检查交易状态  参数_hash为交易流水  返回值status 为1才表示成功，0则表示未成功（或即将成功），通常间隔一秒调用此方法10次后，可认为失败
-func checkStatus(params map[string]string) interface{} {
+func checkStatus(params map[string]string) (interface{},error) {
 	hash:=params["hash"]
 	receipt, err := client.EthClient.TransactionReceipt(context.Background(), common.HexToHash(hash))
 	if err != nil {
-		panic(err.Error())
+		return nil,err
 	}
-	return receipt
+	return receipt,nil
 }
 
 
 //授权
-func approve(params map[string]string) interface{} {
+func approve(params map[string]string) (interface{},error) {
 	coinContract:=params["coinContract"]
 	pri:=params["pri"]
 	amo:=params["amo"]
@@ -318,21 +328,21 @@ func approve(params map[string]string) interface{} {
 	signedTx, err := utils.CallContractMethod(pri,coinContract,inputParams,"approve",client.EthABI)
 	err = client.EthClient.SendTransaction(context.Background(), signedTx)
 	if err != nil {
-		panic("Send transaction error")
+		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
 		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
 		if err!=nil {
-			panic(err.Error())
+			return nil,err
 		}else {
-			return hash.Hex()
+			return hash.Hex(),nil
 		}
 	}
 }
 
 
 //创建红包
-func createRedPack(params map[string]string) interface{} {
+func createRedPack(params map[string]string) (interface{},error) {
 	pri:=params["pri"]
 	amo:=params["amo"]
 	redContract:=params["redContract"]
@@ -346,20 +356,20 @@ func createRedPack(params map[string]string) interface{} {
 
 	err = client.EthClient.SendTransaction(context.Background(), signedTx)
 	if err != nil {
-		panic("Send transaction error")
+		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
 		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
 		if err!=nil {
-			panic(err.Error())
+			return nil,err
 		}else {
-			return hash.Hex()
+			return hash.Hex(),nil
 		}
 	}
 }
 
 //创建红包
-func huntingRedPack(params map[string]string) interface{} {
+func huntingRedPack(params map[string]string) (interface{},error) {
 	pri:=params["pri"]
 	redContract:=params["redContract"]
 	redId:=params["redId"]
@@ -369,20 +379,20 @@ func huntingRedPack(params map[string]string) interface{} {
 
 	err = client.EthClient.SendTransaction(context.Background(), signedTx)
 	if err != nil {
-		panic("Send transaction error")
+		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
 		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
 		if err!=nil {
-			panic(err.Error())
+			return nil,err
 		}else {
-			return hash.Hex()
+			return hash.Hex(),nil
 		}
 	}
 }
 
 //提现红包
-func withdrawBalance(params map[string]string) interface{} {
+func withdrawBalance(params map[string]string) (interface{},error) {
 	pri:=params["pri"]
 	redContract:=params["redContract"]
 	redId:=params["redId"]
@@ -392,30 +402,30 @@ func withdrawBalance(params map[string]string) interface{} {
 
 	err = client.EthClient.SendTransaction(context.Background(), signedTx)
 	if err != nil {
-		panic("Send transaction error")
+		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
 		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
 		if err!=nil {
-			panic(err.Error())
+			return nil,err
 		}else {
-			return hash.Hex()
+			return hash.Hex(),nil
 		}
 	}
 }
 
 //获得红包信息
-func getSendPackInfo(params map[string]string) interface{} {
+func getSendPackInfo(params map[string]string) (interface{},error) {
 	redContract:=params["redContract"]
 	redId:=params["redId"]
 	inputArgData:=make([]string,1)
 	inputArgData[0]=redId
 	mapObj:=utils.Query(common.HexToAddress(redContract),"getPackInfo",inputArgData,client.ReDPackAbi)
-	return mapObj
+	return mapObj,nil
 }
 
 //获取剩余授权额度
-func getApproveRemainBalance(params map[string]string) interface{} {
+func getApproveRemainBalance(params map[string]string) (interface{},error) {
 	contract:=params["contract"]
 	myAddr:=params["myAddr"]
 	if !strings.HasPrefix(myAddr,"0x") {
@@ -427,12 +437,12 @@ func getApproveRemainBalance(params map[string]string) interface{} {
 	inputArgData[0]=myAddr
 	inputArgData[1]=spender
 	mapObj:=utils.Query(common.HexToAddress(contract),"allowance",inputArgData,client.EthABI)
-	return mapObj
+	return mapObj,nil
 }
 
 
 //提交支付
-func payOrder(params map[string]string) interface{} {
+func payOrder(params map[string]string) (interface{},error) {
 	pri:=params["pri"]
 	payContract:=params["payContract"]
 	oId:=params["oId"]
@@ -441,48 +451,48 @@ func payOrder(params map[string]string) interface{} {
 	signedTx, err := utils.CallContractMethod(pri,payContract,inputParams,"payOrder",client.ReDPackAbi)
 	err = client.EthClient.SendTransaction(context.Background(), signedTx)
 	if err != nil {
-		panic("Send transaction error")
+		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
 		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
 		if err!=nil {
-			panic(err.Error())
+			return nil,err
 		}else {
-			return hash.Hex()
+			return hash.Hex(),nil
 		}
 	}
 }
 
 //获取商家信息
-func findBusiness(params map[string]string) interface{} {
+func findBusiness(params map[string]string) (interface{},error) {
 	contract:=params["contract"]
 	address:=params["address"]
 	inputArgData:=make([]string,1)
 	inputArgData[0]=address
 	mapObj:=utils.Query(common.HexToAddress(contract),"findBusiness",inputArgData,client.PayCenterAbi)
-	return mapObj
+	return mapObj,nil
 }
 
 //获取订单信息
-func findOrder(params map[string]string) interface{} {
+func findOrder(params map[string]string) (interface{},error) {
 	contract:=params["contract"]
 	orderId:=params["orderId"]
 	inputArgData:=make([]string,1)
 	inputArgData[0]=orderId
 	mapObj:=utils.Query(common.HexToAddress(contract),"findOrder",inputArgData,client.PayCenterAbi)
-	return mapObj
+	return mapObj,nil
 }
 
 //获取通证精度（任意ERC20通证）
-func getDecimals(params map[string]string) interface{} {
+func getDecimals(params map[string]string) (interface{},error) {
 	contract:=params["contract"]
 	mapObj:=utils.Query(common.HexToAddress(contract),"decimals",nil,client.EthABI)
-	return mapObj
+	return mapObj,nil
 }
 
 
 //获取通证列表
-func getAllToken(params map[string]string) interface{} {
+func getAllToken(params map[string]string) (interface{},error) {
 	contract:=params["contract"]
 	mapObj:=utils.Query(common.HexToAddress(contract),"getTokenList",nil,client.RegisterABI)
 	if mapObj!=nil&&mapObj["ret0"]!=nil{
@@ -493,9 +503,9 @@ func getAllToken(params map[string]string) interface{} {
 			temp:=getTokenDetail(contract,value.Hex())
 			tokenList.PushBack(temp)
 		}
-		return tokenList
+		return tokenList,nil
 	}else{
-		panic("token list get fail")
+		return nil,errors.New("token list get fail")
 	}
 }
 
@@ -508,14 +518,14 @@ func getTokenDetail(contract string,tokenAddress string) map[string]interface{}{
 }
 
 //获取企业基本信息
-func getCompanyInfo(params map[string]string) interface{}{
+func getCompanyInfo(params map[string]string) (interface{},error){
 	contract:=params["contract"]
 	mapObj:=utils.Query(common.HexToAddress(contract),"getCompanyInfo",nil,client.PubTokenABI)
-	return mapObj
+	return mapObj,nil
 }
 
 //绑定银行卡
-func updateBankInfo(params map[string]string) interface{}{
+func updateBankInfo(params map[string]string) (interface{},error){
 	pri:=params["pri"]
 	contract:=params["contract"]
 	bankNo:=params["bankNo"]
@@ -528,20 +538,20 @@ func updateBankInfo(params map[string]string) interface{}{
 	signedTx, err := utils.CallContractMethod(pri,contract,inputParams,"setBankItem",client.PubTokenABI)
 	err = client.EthClient.SendTransaction(context.Background(), signedTx)
 	if err != nil {
-		panic("Send transaction error")
+		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
 		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
 		if err!=nil {
-			panic(err.Error())
+			return nil,err
 		}else {
-			return hash.Hex()
+			return hash.Hex(),nil
 		}
 	}
 }
 
 //获取NFT市场列表
-func getNFTMarketSimpleItem(params map[string]string) interface{} {
+func getNFTMarketSimpleItem(params map[string]string) (interface{},error) {
 	contract:=params["contract"]
 	mapObj:=utils.Query(common.HexToAddress(contract),"getNFTList",nil,client.RegisterABI)
 	if mapObj!=nil&&mapObj["ret0"]!=nil{
@@ -552,9 +562,9 @@ func getNFTMarketSimpleItem(params map[string]string) interface{} {
 			temp:=getNFTCMarketDetail(contract,value.Hex())
 			tokenList.PushBack(temp)
 		}
-		return tokenList
+		return tokenList,nil
 	}else{
-		panic("token list get fail")
+		return nil,errors.New("token list get fail")
 	}
 }
 
@@ -567,23 +577,23 @@ func getNFTCMarketDetail(contract string,nftContractAddress string) map[string]i
 }
 
 //获取指定NFT物品详情
-func getNFTDetail(params map[string]string) interface{} {
+func getNFTDetail(params map[string]string) (interface{},error) {
 	contract:=params["contract"]
 	nftTokenId:=params["nftTokenId"]
 	inputArgData:=make([]string,1)
 	inputArgData[0]=nftTokenId
 	mapObj:=utils.Query(common.HexToAddress(contract),"getTokenItemInfo",inputArgData,client.NFTABI)
-	return mapObj
+	return mapObj,nil
 }
 
 //获取NFT单元总数量
-func getNFTAmount(params map[string]string) interface{} {
+func getNFTAmount(params map[string]string) (interface{},error) {
 	contract:=params["contract"]
 	mapObj:=utils.Query(common.HexToAddress(contract),"totalSupply",nil,client.NFTABI)
-	return mapObj
+	return mapObj,nil
 }
 //获取某账户在某NFT合约下持有的NFT数量
-func getAccountNFTAmount(params map[string]string) interface{} {
+func getAccountNFTAmount(params map[string]string) (interface{},error) {
 	contract:=params["contract"]
 	ownAddress:=params["ownAddress"]
 	if !strings.HasPrefix(ownAddress,"0x") {
@@ -592,11 +602,11 @@ func getAccountNFTAmount(params map[string]string) interface{} {
 	inputArgData:=make([]string,1)
 	inputArgData[0]=ownAddress
 	mapObj:=utils.Query(common.HexToAddress(contract),"balanceOf",inputArgData,client.NFTABI)
-	return mapObj
+	return mapObj,nil
 }
 
 //转移NFT
-func transferNft(params map[string]string) interface{}{
+func transferNft(params map[string]string) (interface{},error){
 	pri:=params["pri"]
 	contract:=params["contract"]
 	toAddr:=params["toAddr"]
@@ -617,33 +627,40 @@ func transferNft(params map[string]string) interface{}{
 	signedTx, err := utils.CallContractMethod(pri,contract,inputParams,"transferFrom",client.NFTABI)
 	err = client.EthClient.SendTransaction(context.Background(), signedTx)
 	if err != nil {
-		panic("Send transaction error")
+		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
 		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
 		if err!=nil {
-			panic(err.Error())
+			return nil,err
 		}else {
-			return hash.Hex()
+			return hash.Hex(),nil
 		}
 	}
 }
 
 
 //获取账户下NFT图集封面列表
-func getAllNFTListByAddress(params map[string]string) interface{} {
+func getAllNFTListByAddress(params map[string]string) (interface{},error) {
 	ownAddress:=params["ownAddress"]
 	if !strings.HasPrefix(ownAddress,"0x") {
 		ownAddress=utils.AddrToHex(ownAddress)
 	}
-	nftList:=getNFTMarketSimpleItem(params)
+	nftList,err:=getNFTMarketSimpleItem(params)
+	if err!=nil{
+		return nil,err
+	}
 	nftListArr:=nftList.([]map[string]interface{})
 	accountNftList:=list.New()
 	for _,nftItem:=range nftListArr{
 		itemParam := map[string]string{}
 		itemParam["contract"]=nftItem["ret3"].(common.Address).Hex()
 		itemParam["ownAddress"]=ownAddress
-		count:=getAccountNFTAmount(itemParam).(map[string]interface{})["ret0"].(int)
+		face,err:=getAccountNFTAmount(itemParam)
+		if err!=nil{
+			return nil,err
+		}
+		count,_:=face.(map[string]interface{})["ret0"].(int)
 		if count>0{
 			obj := struct {
 				Parent     interface{} `json:"parent"`
@@ -655,11 +672,11 @@ func getAllNFTListByAddress(params map[string]string) interface{} {
 			accountNftList.PushBack(obj)
 		}
 	}
-	return accountNftList
+	return accountNftList,nil
 }
 
 //根据索引获取对应的NFT单元详情
-func tokenOfOwnerByIndex(params map[string]string) interface{} {
+func tokenOfOwnerByIndex(params map[string]string) (interface{},error) {
 	contract:=params["contract"]
 	address:=params["address"]
 	index:=params["index"]
@@ -674,6 +691,6 @@ func tokenOfOwnerByIndex(params map[string]string) interface{} {
 		itemParam["contract"]=contract
 		return getNFTDetail(itemParam)
 	}else {
-		panic("request error")
+		return nil,errors.New("request error")
 	}
 }
