@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/md5"
 	"dechain-go-sdk/client"
+	"dechain-go-sdk/face"
 	"dechain-go-sdk/utils"
 	"encoding/hex"
 	"fmt"
@@ -33,6 +34,32 @@ func ossdk_createClient(ip *C.char) *C.char {
 	client.InitClient(C.GoString(ip))
 	return C.CString("success")
 }
+
+//通过命令调用
+//export ossdk_callCommand
+func ossdk_callCommand(command *C.char,params *C.char) *C.char {
+	methodName:=C.GoString(command)
+	json:=C.GoString(params)
+	tempMap:=map[string]string{}
+	err := json.Unmarshal([]byte(json), &tempMap)
+	if err != nil {
+		obj:=face.MessageResult{
+			Code:    2 ,
+			Message: "params error",
+			Data: nil,
+		}
+		return C.CString(utils.ToJson(obj))
+	}
+	obj:=face.Call(methodName,tempMap)
+	return C.CString(utils.ToJson(obj))
+}
+
+
+
+
+//------------------------以下方法已弃用-------------------------------------
+
+
 
 
 //生成助记词、私钥、地址
@@ -695,4 +722,6 @@ func ossdk_priSign(_pri *C.char) *C.char {
 	res.Data=rawTxHex
 	return C.CString(utils.ToJson(res))
 }
+
+
 
