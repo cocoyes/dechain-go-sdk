@@ -223,12 +223,7 @@ func transferMain(params map[string]string) (interface{},error) {
 		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
-		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
-		if err!=nil {
-			return hash.Hex(),errors.New("trans fail,"+err.Error())
-		}else {
-			return hash.Hex(),nil
-		}
+		return  hash.Hex(),nil
 	}
 }
 
@@ -275,12 +270,7 @@ func transferContract(params map[string]string) (interface{},error) {
 		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
-		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
-		if err!=nil {
-			return hash.Hex(),errors.New("trans fail,"+err.Error())
-		}else {
-			return  hash.Hex(),nil
-		}
+		return  hash.Hex(),nil
 	}
 }
 
