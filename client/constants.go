@@ -3,7 +3,7 @@ package client
 const EthMaxGasLimit =21000
 const ContractGasLimit = 5000000
 
-const GasPrice=1
+const GasPrice=10
 
 const Address ="address"
 const Uint256 = "uint256"
