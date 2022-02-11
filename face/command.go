@@ -320,12 +320,7 @@ func approve(params map[string]string) (interface{},error) {
 		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
-		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
-		if err!=nil {
-			return nil,err
-		}else {
-			return hash.Hex(),nil
-		}
+		return hash.Hex(),nil
 	}
 }
 
@@ -348,12 +343,7 @@ func createRedPack(params map[string]string) (interface{},error) {
 		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
-		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
-		if err!=nil {
-			return nil,err
-		}else {
-			return hash.Hex(),nil
-		}
+		return hash.Hex(),nil
 	}
 }
 
@@ -371,12 +361,7 @@ func huntingRedPack(params map[string]string) (interface{},error) {
 		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
-		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
-		if err!=nil {
-			return nil,err
-		}else {
-			return hash.Hex(),nil
-		}
+		return hash.Hex(),nil
 	}
 }
 
@@ -394,12 +379,7 @@ func withdrawBalance(params map[string]string) (interface{},error) {
 		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
-		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
-		if err!=nil {
-			return nil,err
-		}else {
-			return hash.Hex(),nil
-		}
+		return hash.Hex(),nil
 	}
 }
 
@@ -443,12 +423,7 @@ func payOrder(params map[string]string) (interface{},error) {
 		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
-		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
-		if err!=nil {
-			return nil,err
-		}else {
-			return hash.Hex(),nil
-		}
+		return hash.Hex(),nil
 	}
 }
 
@@ -531,12 +506,7 @@ func updateBankInfo(params map[string]string) (interface{},error){
 		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
-		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
-		if err!=nil {
-			return nil,err
-		}else {
-			return hash.Hex(),nil
-		}
+		return hash.Hex(),nil
 	}
 }
 
@@ -620,12 +590,7 @@ func transferNft(params map[string]string) (interface{},error){
 		return nil,errors.New("Send transaction error")
 	}else {
 		hash:=signedTx.Hash()
-		_, err := client.EthClient.TransactionReceipt(context.Background(), hash)
-		if err!=nil {
-			return nil,err
-		}else {
-			return hash.Hex(),nil
-		}
+		return hash.Hex(),nil
 	}
 }
 
