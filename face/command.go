@@ -2,7 +2,6 @@ package face
 
 import "C"
 import (
-	"container/list"
 	"context"
 	"crypto/ecdsa"
 	"crypto/md5"
@@ -488,16 +487,17 @@ func getAllToken(params map[string]string) (interface{},error) {
 	if mapObj!=nil&&mapObj["ret0"]!=nil{
 		ret0:=mapObj["ret0"]
 		arr:=ret0.([]common.Address)
-		tokenList:=list.New()
-		for _,value:=range arr{
+		tokenArr:=make([]map[string]interface{}, len(arr))
+		for index,value:=range arr{
 			temp:=getTokenDetail(contract,value.Hex())
-			tokenList.PushBack(temp)
+			tokenArr[index]=temp
 		}
-		return tokenList,nil
+		return tokenArr,nil
 	}else{
 		return nil,errors.New("token list get fail")
 	}
 }
+
 
 //获取指定通证详情
 func getTokenDetail(contract string,tokenAddress string) map[string]interface{}{
@@ -547,10 +547,10 @@ func getNFTMarketSimpleItem(params map[string]string) (interface{},error) {
 	if mapObj!=nil&&mapObj["ret0"]!=nil{
 		ret0:=mapObj["ret0"]
 		arr:=ret0.([]common.Address)
-		tokenList:=list.New()
-		for _,value:=range arr{
+		tokenList:=make([]map[string]interface{}, len(arr))
+		for index,value:=range arr{
 			temp:=getNFTCMarketDetail(contract,value.Hex())
-			tokenList.PushBack(temp)
+			tokenList[index]=temp
 		}
 		return tokenList,nil
 	}else{
@@ -641,8 +641,8 @@ func getAllNFTListByAddress(params map[string]string) (interface{},error) {
 		return nil,err
 	}
 	nftListArr:=nftList.([]map[string]interface{})
-	accountNftList:=list.New()
-	for _,nftItem:=range nftListArr{
+	accountNftList:=make([]interface{}, len(nftListArr))
+	for index,nftItem:=range nftListArr{
 		itemParam := map[string]string{}
 		itemParam["contract"]=nftItem["ret3"].(common.Address).Hex()
 		itemParam["ownAddress"]=ownAddress
@@ -659,7 +659,7 @@ func getAllNFTListByAddress(params map[string]string) (interface{},error) {
 				Parent:     nftItem,
 				Count:    count,
 			}
-			accountNftList.PushBack(obj)
+			accountNftList[index]=obj
 		}
 	}
 	return accountNftList,nil
