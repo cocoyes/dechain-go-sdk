@@ -57,6 +57,7 @@ var command=map[string]interface{} {
 	"getAllToken":getAllToken, // 获取通证列表
 	"getCompanyInfo":getCompanyInfo, // 获取企业合约基本信息
 	"updateBankInfo":updateBankInfo, // 绑定银行卡
+	"md5Data":md5Data, // md5签名，参数bankNo
 	"getNFTMarketSimpleItem":getNFTMarketSimpleItem, //获取NFT市场图集封面列表
 	"getNFTDetail":getNFTDetail, //获取指定NFT物品详情
 	"getNFTAmount":getNFTAmount, //获取NFT单元总数量
@@ -508,6 +509,15 @@ func updateBankInfo(params map[string]string) (interface{},error){
 		hash:=signedTx.Hash()
 		return hash.Hex(),nil
 	}
+}
+
+func md5Data(params map[string]string) (interface{},error){
+	bankNo:=params["bankNo"]
+	data := []byte(bankNo)
+	h := md5.New()
+	h.Write(data)
+	s := hex.EncodeToString(h.Sum(nil))
+	return s,nil
 }
 
 //获取NFT市场列表

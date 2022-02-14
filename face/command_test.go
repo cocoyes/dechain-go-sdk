@@ -1,7 +1,6 @@
 package face
 
 import (
-	"container/list"
 	"dechain-go-sdk/client"
 	"dechain-go-sdk/utils"
 	"fmt"
@@ -17,14 +16,11 @@ func TestAllToken(t *testing.T) {
 }
 
 func TestJson(t *testing.T){
-	aa:=map[string]interface{}{}
-	aa["contract"]="0x2ea7b8661D7395bcD6d777C50B075BDd2E61b110"
-	bb:=map[string]interface{}{}
-	bb["ss"]=11
-	ls:=list.New()
-	ls.PushBack(aa)
-	ls.PushBack(bb)
-	fmt.Println(utils.ToJson(ls))
+	client.InitClient("39.103.141.174")
+	aa:=map[string]string{}
+	aa["hash"]="0x467b83af852dd42e8c42c56a869b7a947988ed88d6ff9767d42a82adb645edfd"
+	res1:=Call("checkStatus",aa)
+	fmt.Println(utils.ToJson(res1))
 }
 
 
