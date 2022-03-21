@@ -9,6 +9,7 @@ import (
 	"dechain-go-sdk/utils"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -665,7 +666,8 @@ func payRegisterOrder(params map[string]string) (interface{}, error) {
 	inputParams[1] = token
 	inputParams[2] = amount
 	inputParams[3] = oId
-	signedTx, err := utils.CallContractMethod(pri, payContract, inputParams, "payOrder", client.ReDPackAbi)
+	signedTx, err := utils.CallContractMethod(pri, payContract, inputParams, "payOrder", client.RegisterABI)
+	fmt.Println(utils.ToJson(signedTx))
 	err = client.EthClient.SendTransaction(context.Background(), signedTx)
 	if err != nil {
 		return nil, errors.New("Send transaction error")

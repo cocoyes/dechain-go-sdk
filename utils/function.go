@@ -24,49 +24,44 @@ import (
 )
 
 type FunctionCode struct {
-	params string
+	params   string
 	funcName string
-	data []byte
+	data     []byte
 }
 
-
-func (fun *FunctionCode) AppendParam(str string)  {
-	if len(fun.params)==0 {
-		fun.params=str
-	}else {
-		fun.params=fun.params+","+str
+func (fun *FunctionCode) AppendParam(str string) {
+	if len(fun.params) == 0 {
+		fun.params = str
+	} else {
+		fun.params = fun.params + "," + str
 	}
 }
 
-func (fun *FunctionCode) SetFuncName(str string)  {
-	fun.funcName=str
+func (fun *FunctionCode) SetFuncName(str string) {
+	fun.funcName = str
 }
 
-
-func (fun *FunctionCode) AppendData(bt []byte)  {
-	if len(fun.data)==0 {
+func (fun *FunctionCode) AppendData(bt []byte) {
+	if len(fun.data) == 0 {
 		fun.data = append(fun.data, crypto.Keccak256(fun.ToByteArray())[:4]...)
 	}
-	fun.data = append(fun.data,common.LeftPadBytes(bt, 32)...)
+	fun.data = append(fun.data, common.LeftPadBytes(bt, 32)...)
 
 }
 
-
-
-func (fun *FunctionCode) ToStrCode() string  {
-	return fun.funcName+"("+fun.params+")"
+func (fun *FunctionCode) ToStrCode() string {
+	return fun.funcName + "(" + fun.params + ")"
 }
 
-func (fun *FunctionCode) ToByteArray() []byte  {
+func (fun *FunctionCode) ToByteArray() []byte {
 	return []byte(fun.ToStrCode())
 }
 
-
 //封装的交易签名方法 不可传string
-func CallContractTransactionMethod(prikey string,fc FunctionCode,contract string) (*types.Transaction, error) {
-	gasPrice:=big.NewInt(client.GasPrice)
-	cryKey, _  := crypto.HexToECDSA(prikey)
-	fromAddr:=crypto.PubkeyToAddress(cryKey.PublicKey)
+func CallContractTransactionMethod(prikey string, fc FunctionCode, contract string) (*types.Transaction, error) {
+	gasPrice := big.NewInt(client.GasPrice)
+	cryKey, _ := crypto.HexToECDSA(prikey)
+	fromAddr := crypto.PubkeyToAddress(cryKey.PublicKey)
 	penNonce, err := client.EthClient.PendingNonceAt(context.Background(), fromAddr)
 
 	chainID, _ := client.EthClient.NetworkID(context.Background())
@@ -75,52 +70,47 @@ func CallContractTransactionMethod(prikey string,fc FunctionCode,contract string
 	signature, err := crypto.Sign(signer.Hash(tx).Bytes(), cryKey)
 	if err != nil {
 		fmt.Println("sign error")
-		return nil,err
+		return nil, err
 	}
 	signedTx, err := tx.WithSignature(signer, signature)
-	return signedTx,err
+	return signedTx, err
 }
 
-
 //封装的交易签名方法
-func CallContractMethod(prikey string,contract string,inputParams[]string,funcName string,abiContent string) (*types.Transaction, error) {
-	gasPrice:=big.NewInt(client.GasPrice)
-	cryKey, _  := crypto.HexToECDSA(prikey)
-	fromAddr:=crypto.PubkeyToAddress(cryKey.PublicKey)
+func CallContractMethod(prikey string, contract string, inputParams []string, funcName string, abiContent string) (*types.Transaction, error) {
+	gasPrice := big.NewInt(client.GasPrice)
+	cryKey, _ := crypto.HexToECDSA(prikey)
+	fromAddr := crypto.PubkeyToAddress(cryKey.PublicKey)
 	penNonce, err := client.EthClient.PendingNonceAt(context.Background(), fromAddr)
 
 	chainID, _ := client.EthClient.NetworkID(context.Background())
 
-
 	funcSignature, _ := ExtractFuncDefinition(string(abiContent), ExtractFuncName(funcName))
-	txInputData, err :=BuildTxInputData(funcSignature, inputParams)
+	txInputData, err := BuildTxInputData(funcSignature, inputParams)
 
-	tx := types.NewTransaction(penNonce, common.HexToAddress(contract), big.NewInt(0), client.ContractGasLimit, gasPrice,txInputData )
+	tx := types.NewTransaction(penNonce, common.HexToAddress(contract), big.NewInt(0), client.ContractGasLimit, gasPrice, txInputData)
 	signer := types.LatestSignerForChainID(chainID)
 	signature, err := crypto.Sign(signer.Hash(tx).Bytes(), cryKey)
 	if err != nil {
 		fmt.Println("sign error")
-		return nil,err
+		return nil, err
 	}
 	signedTx, err := tx.WithSignature(signer, signature)
-	return signedTx,err
+	return signedTx, err
 }
 
-
-func Query(contract common.Address,funcName string,inputParams []string,abiContent string) map[string]interface{}   {
+func Query(contract common.Address, funcName string, inputParams []string, abiContent string) map[string]interface{} {
 
 	funcSignature, _ := ExtractFuncDefinition(string(abiContent), ExtractFuncName(funcName))
-	txInputData, _ :=BuildTxInputData(funcSignature, inputParams)
+	txInputData, _ := BuildTxInputData(funcSignature, inputParams)
 	opts := new(bind.CallOpts)
 	msg := ethereum.CallMsg{From: opts.From, To: &contract, Data: txInputData}
 	var hex hexutil.Bytes
-	client.EthClient.CallContext(context.Background(), &hex, "eth_call",toCallArg(msg),"pending")
-	return buildResult(funcSignature,hex)
+	client.EthClient.CallContext(context.Background(), &hex, "eth_call", toCallArg(msg), "pending")
+	return buildResult(funcSignature, hex)
 }
 
-
-
-func buildResult(funcDefinition string, output []byte) map[string]interface{}  {
+func buildResult(funcDefinition string, output []byte) map[string]interface{} {
 	var v = make(map[string]interface{})
 	returnArgs, err := buildReturnArgs(funcDefinition)
 	checkErr(err)
@@ -129,9 +119,6 @@ func buildResult(funcDefinition string, output []byte) map[string]interface{}  {
 	checkErr(err)
 	return v
 }
-
-
-
 
 func printContractReturnData(funcDefinition string, output []byte) {
 	var v = make(map[string]interface{})
@@ -148,7 +135,7 @@ func printContractReturnData(funcDefinition string, output []byte) {
 			fmt.Printf("%v = %v\n", returnArg.Name, v[returnArg.Name].(common.Address).Hex())
 		} else if returnArg.Type.T == abi.SliceTy {
 			if returnArg.Type.Elem.T == abi.AddressTy { // element is address
-				if v[returnArg.Name]!=nil{
+				if v[returnArg.Name] != nil {
 					addresses := v[returnArg.Name].([]common.Address)
 
 					fmt.Printf("%v = [", returnArg.Name)
@@ -221,8 +208,6 @@ func buildReturnArgs(funcDefinition string) (abi.Arguments, error) {
 	return theReturnTypes, nil
 }
 
-
-
 func toCallArg(msg ethereum.CallMsg) interface{} {
 	arg := map[string]interface{}{
 		"from": msg.From,
@@ -242,8 +227,6 @@ func toCallArg(msg ethereum.CallMsg) interface{} {
 	}
 	return arg
 }
-
-
 
 func parseFuncSignature(input string) (string, []string, error) {
 	if strings.HasPrefix(input, "function ") {
@@ -1120,7 +1103,7 @@ func scientificNotation2Decimal(input string) (string, error) {
 	return result, nil
 }
 
-func checkErr(err error)  {
+func checkErr(err error) {
 	fmt.Println(err)
 }
 func ExtractFuncName(input string) string {
@@ -1136,6 +1119,7 @@ func ExtractFuncName(input string) string {
 	}
 	return funcName
 }
+
 // BuildTxInputData build tx input data
 func BuildTxInputData(funcSignature string, inputArgData []string) ([]byte, error) {
 	funcName, funcArgTypes, err := parseFuncSignature(funcSignature)

@@ -103,3 +103,38 @@ func TestAddr(t *testing.T) {
 	addr, _ := sdk.ValAddressFromBech32("evmosvalcons1nh2yl2vagsmqy00p9htzk62l9u3tjwslr4ldt5")
 	fmt.Println(addr)
 }
+
+func CheckStatus(hash string) {
+	approveParam := map[string]string{}
+	approveParam["hash"] = hash
+	res1 := Call("checkStatus", approveParam)
+	fmt.Println("res1= " + utils.ToJson(res1))
+}
+
+func TestStatus(t *testing.T) {
+	client.InitClient("8.142.76.237")
+	CheckStatus("0x15525066a0e8ad809ff8a86806dc200644ef78716a5ee7c23ce4cb68277f4c7a")
+}
+
+func TestPayOrder(t *testing.T) {
+	client.InitClient("8.142.76.237")
+	pri := "cad9211df425e18e3e12fff5d53e72ac0e8a2db1f748b8feed5c20a96a4758ad"
+	registerContract := "0x7081353f20E15C54badfFA918c1ac70bd69Df4C2"
+	token := "0xaED255425d58ADbd7f0dFcE809943eA5F4DcE432"
+	appId := "61ca7b3893d8ef64c15e9dbd"
+	oid := "P2503854150470348801"
+	amount := "500000000000000000"
+
+	//step1:approve
+	approveParam := map[string]string{}
+	approveParam["payContract"] = registerContract
+	approveParam["pri"] = pri
+	approveParam["oId"] = oid
+	approveParam["appId"] = appId
+	approveParam["token"] = token
+	approveParam["amount"] = amount
+
+	res1 := Call("payRegisterOrder", approveParam)
+	fmt.Println("res1= " + utils.ToJson(res1))
+
+}
