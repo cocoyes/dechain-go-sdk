@@ -33,20 +33,6 @@ func TestGetAllToken(t *testing.T) {
 	fmt.Println(utils.ToJson(obj))
 }
 
-func TestTransferContract(t *testing.T) {
-	client.InitClient("192.168.6.42")
-	tempMap := map[string]string{}
-	tempMap["pri"] = "551ab8527bc625e607b5ca58aa9aeb3b617d2f297d512b322ecc042d21a3d5c6"
-	tempMap["caddr"] = "0x42A9C909c126D08bC7ff89bE29616d4e9829EbE2"
-	tempMap["taddr"] = "de1r3dw02vgpp05wjdz9stqtl0vhrrt2jmhu858uv"
-	tempMap["amo"] = "2000000000000000000"
-	res := Call("transferContract", tempMap)
-	//fmt.Println(utils.ToJson(res))
-	//fmt.Println(utils.ToJson(Call("balanceContract",tempMap)))
-	//res:=Call("calFee",tempMap)
-	fmt.Println(utils.ToJson(res))
-}
-
 func TestRedPack(t *testing.T) {
 	client.InitClient("39.103.141.174")
 	pri := "551ab8527bc625e607b5ca58aa9aeb3b617d2f297d512b322ecc042d21a3d5c6"
@@ -136,5 +122,20 @@ func TestPayOrder(t *testing.T) {
 
 	res1 := Call("payRegisterOrder", approveParam)
 	fmt.Println("res1= " + utils.ToJson(res1))
+
+}
+
+func TestTransferContract(t *testing.T) {
+	client.InitClient("8.142.76.237")
+	tempMap := map[string]string{}
+	tempMap["pri"] = "cad9211df425e18e3e12fff5d53e72ac0e8a2db1f748b8feed5c20a96a4758ad"
+	tempMap["caddr"] = "0xaed255425d58adbd7f0dfce809943ea5f4dce432"
+	tempMap["taddr"] = "de1r3dw02vgpp05wjdz9stqtl0vhrrt2jmhu858uv"
+	tempMap["amo"] = "5000000000000000000"
+	res := Call("transferContract", tempMap)
+	//fmt.Println(utils.ToJson(res))
+	//fmt.Println(utils.ToJson(Call("balanceContract",tempMap)))
+	//res:=Call("calFee",tempMap)
+	fmt.Println(utils.ToJson(res))
 
 }

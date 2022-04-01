@@ -6,10 +6,12 @@ import (
 	"crypto/ecdsa"
 	"crypto/md5"
 	"dechain-go-sdk/client"
+	"dechain-go-sdk/sol/goods"
 	"dechain-go-sdk/utils"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -669,6 +671,75 @@ func payRegisterOrder(params map[string]string) (interface{}, error) {
 	signedTx, err := utils.CallContractMethod(pri, payContract, inputParams, "payOrder", client.RegisterABI)
 	fmt.Println(utils.ToJson(signedTx))
 	err = client.EthClient.SendTransaction(context.Background(), signedTx)
+
+	if err != nil {
+		return nil, errors.New("Send transaction error")
+	} else {
+		hash := signedTx.Hash()
+		return hash.Hex(), nil
+	}
+}
+
+//注册商品,
+func exShopCallRegister(params map[string]string) (interface{}, error) {
+	pri := params["pri"]
+	master := params["master"]
+	coin := params["coin"]
+	num := params["num"]
+	price := params["price"]
+	cryKey, _ := crypto.HexToECDSA(pri)
+
+	transactOpts := bind.NewKeyedTransactor(cryKey)
+	numValue, _ := new(big.Int).SetString(num, 10)
+	priceValue, _ := new(big.Int).SetString(price, 10)
+	addr, _, _, err := goods.DeployGoods(transactOpts, client.EthClient, common.HexToAddress(master), common.HexToAddress(coin), numValue, priceValue)
+	if err != nil {
+		return nil, errors.New("Deploy contract error")
+	}
+	inputParams := make([]string, 1)
+	inputParams[0] = addr.Hex()
+	signedTx, err := utils.CallContractMethod(pri, master, inputParams, "callRegister", client.MasterABI)
+	fmt.Println(utils.ToJson(signedTx))
+	err = client.EthClient.SendTransaction(context.Background(), signedTx)
+
+	if err != nil {
+		return nil, errors.New("Send transaction error")
+	} else {
+		hashHex := signedTx.Hash()
+		obj := struct {
+			Hash          string `json:"hash"`
+			GoodsContract string `json:"goodsContract"`
+		}{
+			Hash:          hashHex.Hex(),
+			GoodsContract: addr.Hex(),
+		}
+		return obj, nil
+	}
+}
+
+//创建订单
+func exShopCreateOrder(params map[string]string) (interface{}, error) {
+	pri := params["pri"]
+	goods := params["goods"]
+	otherGoods := params["otherGoods"]
+	myOrderId := params["myOrderId"]
+	otherOrderId := params["otherOrderId"]
+	myNum := params["myNum"]
+	otherNum := params["otherNum"]
+	myPay := params["myPay"]
+	payAmount := params["payAmount"]
+	inputParams := make([]string, 7)
+	inputParams[0] = otherGoods
+	inputParams[1] = myOrderId
+	inputParams[2] = otherOrderId
+	inputParams[3] = myNum
+	inputParams[4] = otherNum
+	inputParams[5] = myPay
+	inputParams[6] = payAmount
+	signedTx, err := utils.CallContractMethod(pri, goods, inputParams, "createOrder", client.RegisterABI)
+	fmt.Println(utils.ToJson(signedTx))
+	err = client.EthClient.SendTransaction(context.Background(), signedTx)
+
 	if err != nil {
 		return nil, errors.New("Send transaction error")
 	} else {
