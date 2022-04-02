@@ -686,6 +686,7 @@ func payRegisterOrder(params map[string]string) (interface{}, error) {
 //注册商品,
 func exShopCallRegister(params map[string]string) (interface{}, error) {
 	pri := params["pri"]
+	id := params["id"]
 	master := params["master"]
 	coin := params["coin"]
 	num := params["num"]
@@ -699,8 +700,9 @@ func exShopCallRegister(params map[string]string) (interface{}, error) {
 	if err != nil {
 		return nil, errors.New("Deploy contract error")
 	}
-	inputParams := make([]string, 1)
+	inputParams := make([]string, 2)
 	inputParams[0] = addr.Hex()
+	inputParams[1] = id
 	signedTx, err := utils.CallContractMethod(pri, master, inputParams, "callRegister", client.MasterABI)
 	fmt.Println(utils.ToJson(signedTx))
 	err = client.EthClient.SendTransaction(context.Background(), signedTx)
