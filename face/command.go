@@ -68,6 +68,9 @@ var command = map[string]interface{}{
 	"getAllNFTListByAddress":  getAllNFTListByAddress,  // 获取账户下NFT图集封面列表
 	"tokenOfOwnerByIndex":     tokenOfOwnerByIndex,     //根据索引获取对应的NFT单元详情
 	"payRegisterOrder":        payRegisterOrder,        //新版支付
+	"exShopCallRegister":      exShopCallRegister,      //注册商品
+	"exShopCreateOrder":       exShopCreateOrder,       //创建订单
+	"changeNumAndPrice":       changeNumAndPrice,       //修改价格
 }
 
 func Call(methodName string, params ...interface{}) (result MessageResult) {
