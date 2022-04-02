@@ -736,7 +736,29 @@ func exShopCreateOrder(params map[string]string) (interface{}, error) {
 	inputParams[4] = otherNum
 	inputParams[5] = myPay
 	inputParams[6] = payAmount
-	signedTx, err := utils.CallContractMethod(pri, goods, inputParams, "createOrder", client.RegisterABI)
+	signedTx, err := utils.CallContractMethod(pri, goods, inputParams, "createOrder", client.GoodsABI)
+	fmt.Println(utils.ToJson(signedTx))
+	err = client.EthClient.SendTransaction(context.Background(), signedTx)
+
+	if err != nil {
+		return nil, errors.New("Send transaction error")
+	} else {
+		hash := signedTx.Hash()
+		return hash.Hex(), nil
+	}
+}
+
+//修改价格、数量
+func changeNumAndPrice(params map[string]string) (interface{}, error) {
+	pri := params["pri"]
+	goods := params["goods"]
+	nums := params["nums"]
+	price := params["price"]
+	inputParams := make([]string, 2)
+	inputParams[0] = nums
+	inputParams[1] = price
+
+	signedTx, err := utils.CallContractMethod(pri, goods, inputParams, "changeNumAndPrice", client.GoodsABI)
 	fmt.Println(utils.ToJson(signedTx))
 	err = client.EthClient.SendTransaction(context.Background(), signedTx)
 
